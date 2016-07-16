@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>WavingFlag</title>
+
+        <script src="lib/Oak3D_v_0_5.js"></script>
+        <script src="lib/glUtil.js"></script>
+
+        <script id="shader-vs-x" type="shader/vs-x">
+
+            precision mediump float;
+
+            attribute vec3 aPosition;
+            attribute vec2 aCoord;
+
+            uniform mat4 uMVMatrix;
+            uniform mat4 uPMatrix;
+
+            uniform float uStartAngle;  // 本帧起始角度
+
+            varying vec2 vCoord;
+
+            void main( void )
+            {
+                // X轴飘动
+
+                float z = aPosition.z + sin( uStartAngle + ( aPosition.x + 1.0 ) * 3.1415926 ) * 0.5;
+                gl_Position = uPMatrix * uMVMatrix * vec4( aPosition.x, aPosition.y, z, 1.0 );
+                vCoord = aCoord;
+
+            }
+        </script>
+
+        <script id="shader-vs-xy" type="shader/vs-xy">
+
+            precision mediump float;
+
+            attribute vec3 aPosition;
+            attribute vec2 aCoord;
+
+            uniform mat4 uMVMatrix;
+            uniform mat4 uPMatrix;
+
+            uniform float uStartAngle;  // 本帧起始角度
+
+            varying vec2 vCoord;
+
+            void main( void )
+            {
+
+                // 斜向下
+                float currAngleX = uStartAngle + ( aPosition.x + 1.0 ) * 3.1415926;
+                float currAngleY = uStartAngle + ( aPosition.y + 1.0 ) * 3.1415926;
+                float z = aPosition.z + sin( currAngleX + currAngleY ) * 0.3;
+                gl_Position = uPMatrix * uMVMatrix * vec4( aPosition.x, aPosition.y, z, 1.0 );
+                vCoord = aCoord;
+
+            }
+        </script>
+
+        <script id="shader-vs-x-y" type="shader/vs-x-y">
+
+            precision mediump float;
+
+            attribute vec3 aPosition;
+            attribute vec2 aCoord;
+
+            uniform mat4 uMVMatrix;
+            uniform mat4 uPMatrix;
+
+            uniform float uStartAngle;  // 本帧起始角度
+
+            varying vec2 vCoord;
+
+            void main( void )
+            {
+                // X Y 自由
+                float currAngleX = uStartAngle + ( aPosition.x + 1.0 ) * 3.1415926 ;
+                float currAngleY = uStartAngle + ( aPosition.y + 1.0 ) * 3.1415926 * 0.75;
+                float zx = aPosition.z + sin( currAngleX ) * 0.3;
+                float zy = aPosition.z + sin( currAngleY ) * 0.3;
+                gl_Position = uPMatrix * uMVMatrix * vec4( aPosition.x, aPosition.y, zx + zy, 1.0 );
+                vCoord = aCoord;
+
+            }
+        </script>
+
+        <script id="shader-fs" type="shader/fs">
+
+            precision mediump float;
+
+            varying vec2 vCoord;
+
+            uniform sampler2D uSampler;
+
+            void main( void )
+            {
+                gl_FragColor = texture2D( uSampler, vec2( vCoord.s, vCoord.t ) );
+            }
+        </script>
+
+        <script>
+
+            var gl, program = [], texture, pMatrix, mvMatrix, drawBuffer;
+
+            function initWebGL( canvas )
+            {
+                gl = glUtil.newWebGL( canvas );
+            }
+
+            function initProgram()
+            {
+                program[ 0 ] = glUtil.newProgram( gl, "shader-vs-x", "shader-fs");
+                program[ 1 ] = glUtil.newProgram( gl, "shader-vs-xy", "shader-fs");
+                program[ 2 ] = glUtil.newProgram( gl, "shader-vs-x-y", "shader-fs");
+
+                program[ 0 ].uStartAngle    = gl.getUniformLocation( program[ 0 ], "uStartAngle" );
+                program[ 0 ].uWidthSpan     = gl.getUniformLocation( program[ 0 ], "uWidthSpan" );
+                program[ 0 ].uSampler       = gl.getUniformLocation( program[ 0 ], "uSampler" );
+
+                program[ 1 ].uStartAngle    = gl.getUniformLocation( program[ 1 ], "uStartAngle" );
+                program[ 1 ].uWidthSpan     = gl.getUniformLocation( program[ 1 ], "uWidthSpan" );
+                program[ 1 ].uSampler       = gl.getUniformLocation( program[ 1 ], "uSampler" );
+
+                program[ 2 ].uStartAngle    = gl.getUniformLocation( program[ 2 ], "uStartAngle" );
+                program[ 2 ].uWidthSpan     = gl.getUniformLocation( program[ 2 ], "uWidthSpan" );
+                program[ 2 ].uSampler       = gl.getUniformLocation( program[ 2 ], "uSampler" );
+
+            }
+
+            function initTexture( src )
+            {
+                texture = glUtil.newTexture( gl, src );
+            }
+
+            var xStartAngle = 0.0;
+            var lastTime = 0.0;
+
+            function animate()
+            {
+                var timeNow = Date.now();
+                if( 0 != lastTime )
+                {
+                    var subTime = timeNow - lastTime;
+
+                    xStartAngle += 0.05;
+
+                    if( 1.0e20 < xStartAngle )
+                    {
+                        xStartAngle = 0.0;
+                    }
+
+                }
+                lastTime = timeNow;
+            }
+
+            var renderInfo;
+            var renderBuffer = [];
+            function initBuffer()
+            {
+
+                var row = 9, col = 12;
+                var offSizeRow = 2.0 / row, offSizeCol = 2.0 / col;
+
+                var vertexs = [];
+                var uvs = [];
+
+                for( var i = 0; i <= row; ++i )
+                {
+                    for( var j = 0; j<= col; ++j )
+                    {
+                        var x = -1 + ( j * offSizeCol );
+                        var y = -1 + ( i * offSizeRow );
+                        var z = 0.0;
+
+                        var s = j / col;
+                        var t = i / row;
+
+                        vertexs.push( x );
+                        vertexs.push( y );
+                        vertexs.push( z );
+
+                        uvs.push( s );
+                        uvs.push( t );
+                    }
+                }
+
+                var indices = [];
+
+                for( var i = 0; i < row; ++i )
+                {
+                    for( var j = 0; j < col; ++j )
+                    {
+                        var first = ( i * ( col + 1 ) ) + j;
+                        var second = first + 1;
+                        var third = first + col + 1;
+
+                        indices.push( first );
+                        indices.push( second );
+                        indices.push( third );
+
+                        first = second;
+                        second = third;
+                        third = second + 1;
+
+                        indices.push( first );
+                        indices.push( second );
+                        indices.push( third );
+                    }
+                }
+
+
+                renderInfo =
+                {
+                    vertexs: vertexs,
+                    uvs: uvs,
+                    indices: indices,
+                };
+
+                renderBuffer[ 0 ] = glUtil.updateInfo( gl, program[ 0 ], renderInfo );
+                renderBuffer[ 1 ] = glUtil.updateInfo( gl, program[ 1 ], renderInfo );
+                renderBuffer[ 2 ] = glUtil.updateInfo( gl, program[ 2 ], renderInfo );
+            }
+
+
+            function drawScene()
+            {
+                glUtil.updateView( gl );
+
+                pMatrix = okMat4Proj( 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0 );
+
+
+                /* **************************** */
+                mvMatrix = new okMat4();
+                mvMatrix.translate( OAK.SPACE_LOCAL, 0.0, 2.0, -10.0, true );
+                mvMatrix.rotX( OAK.SPACE_LOCAL, -20, true );
+                mvMatrix.rotY( OAK.SPACE_LOCAL, 160, true );
+
+                var currProgram = program[ 0 ];
+
+                gl.useProgram( currProgram );
+                glUtil.updateMatrixUniforms( gl, currProgram, pMatrix, mvMatrix );
+
+                gl.uniform1f( currProgram.uStartAngle, ( xStartAngle ) );
+
+                gl.activeTexture( gl.TEXTURE0 );
+                gl.bindTexture( gl.TEXTURE_2D, texture );
+                gl.uniform1i( currProgram.uSampler, 0 );
+
+                glUtil.render( renderBuffer[ 0 ] );
+
+                /* **************************** */
+                mvMatrix = new okMat4();
+                mvMatrix.translate( OAK.SPACE_LOCAL, -2.0, -2.0, -10.0, true );
+                mvMatrix.rotX( OAK.SPACE_LOCAL, -20, true );
+                mvMatrix.rotY( OAK.SPACE_LOCAL, 160, true );
+
+                var currProgram = program[ 1 ];
+
+                gl.useProgram( currProgram );
+                glUtil.updateMatrixUniforms( gl, currProgram, pMatrix, mvMatrix );
+
+                gl.uniform1f( currProgram.uStartAngle, ( xStartAngle ) );
+
+                gl.activeTexture( gl.TEXTURE0 );
+                gl.bindTexture( gl.TEXTURE_2D, texture );
+                gl.uniform1i( currProgram.uSampler, 0 );
+
+                glUtil.render( renderBuffer[ 1 ] );
+
+                /* **************************** */
+                mvMatrix = new okMat4();
+                mvMatrix.translate( OAK.SPACE_LOCAL, 2.0, -2.0, -10.0, true );
+                mvMatrix.rotX( OAK.SPACE_LOCAL, -20, true );
+                mvMatrix.rotY( OAK.SPACE_LOCAL, 160, true );
+
+                var currProgram = program[ 2 ];
+
+                gl.useProgram( currProgram );
+                glUtil.updateMatrixUniforms( gl, currProgram, pMatrix, mvMatrix );
+
+                gl.uniform1f( currProgram.uStartAngle, ( xStartAngle ) );
+
+                gl.activeTexture( gl.TEXTURE0 );
+                gl.bindTexture( gl.TEXTURE_2D, texture );
+                gl.uniform1i( currProgram.uSampler, 0 );
+
+                glUtil.render( renderBuffer[ 2 ] );
+
+            }
+
+            function tick()
+            {
+                requestAnimationFrame( tick );
+
+                animate();
+                drawScene();
+            }
+
+
+            function Start()
+            {
+                var canvas = document.getElementById( "wavingflag" );
+
+                initWebGL( canvas );
+                initProgram();
+                initBuffer();
+                initTexture( "./res/glass.gif" );
+
+                glUtil.reset( gl, true );
+
+                tick();
+            }
+
+        </script>
+    </head>
+
+    <body onload="Start();">
+
+        <canvas id="wavingflag" style="border: none;" width="500" height="500"></canvas>
+
+    </body>
+</html>
