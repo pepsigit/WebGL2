@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>TwistingJelly</title>
+
+        <script src="lib/Oak3D_v_0_5.js"></script>
+        <script src="lib/glUtil.js"></script>
+
+        <script id="shader-vs" type="shader/vs">
+
+            attribute vec3 aPosition;
+            attribute vec4 aColor;
+
+            uniform mat4 uMVMatrix;
+            uniform mat4 uPMatrix;
+
+            uniform float yStart;
+            uniform float angleSpan;
+
+            varying vec4 vColor;
+
+            void main( void )
+            {
+                float tempAngle = angleSpan * ( aPosition.y - yStart );
+
+                vec3 tPosition = aPosition;
+                if( tPosition.y > yStart )
+                {
+                    float d =  tempAngle * 0.01745329;
+                    tPosition.x = ( cos( d ) * aPosition.x - sin( d ) * aPosition.z );
+                    tPosition.z = ( sin( d ) * aPosition.x + cos( d ) * aPosition.z );
+                }
+                gl_Position = uPMatrix * uMVMatrix * vec4( tPosition, 1.0 );
+                vColor = aColor;
+            }
+
+        </script>
+
+        <script id="shader-fs" type="shader/fs">
+
+            precision mediump float;
+
+            uniform sampler2D uSampler;
+
+            varying vec4 vColor;
+
+            void main( void )
+            {
+                gl_FragColor = vColor;//vec4( 1.0, 0.0, 0.0, 1.0 );//texture2D( uSampler, vec2( vCoord.s, vCoord.t ) );
+            }
+
+        </script>
+
+        <script>
+
+            var gl, program, texture, pMatrix, mvMatrix, drawBuffer;
+
+            function initWebGL( canvas )
+            {
+                gl = glUtil.newWebGL( canvas );
+            }
+
+            function initProgram()
+            {
+                program = glUtil.newProgram( gl, "shader-vs", "shader-fs" );
+
+                program.uYStart     = gl.getUniformLocation( program, "yStart" );
+                program.uAngleSpan  = gl.getUniformLocation( program, "angleSpan" );
+            }
+
+            function initBuffer()
+            {
+                var vertexs = [];
+                var colors = [];
+
+                for( var i = -8; i <= 8; ++i )
+                {
+                    var y = i * 0.2;
+
+                    vertexs.push( 1.0 );
+                    vertexs.push( y );
+                    vertexs.push( 1.0 );
+
+                    colors.push( 1.0 );
+                    colors.push( 0.0 );
+                    colors.push( 0.0 );
+                    colors.push( 1.0 );
+
+                    vertexs.push( 1.0 );
+                    vertexs.push( y );
+                    vertexs.push( -1.0 );
+
+                    colors.push( 0.0 );
+                    colors.push( 1.0 );
+                    colors.push( 0.0 );
+                    colors.push( 1.0 );
+
+                    vertexs.push( -1.0 );
+                    vertexs.push( y );
+                    vertexs.push( -1.0 );
+
+                    colors.push( 0.0 );
+                    colors.push( 0.0 );
+                    colors.push( 1.0 );
+                    colors.push( 1.0 );
+
+                    vertexs.push( -1.0 );
+                    vertexs.push( y );
+                    vertexs.push( 1.0 );
+
+                    colors.push( 1.0 );
+                    colors.push( 0.0 );
+                    colors.push( 1.0 );
+                    colors.push( 1.0 );
+
+
+                }
+
+                var lastHead = vertexs.length / 12 - 1;
+                var indices = [ 0, 1, 2, 3, 0, 2 ];
+
+                for( var j = 0; j < lastHead; ++j )
+                {
+                    for( var k = 0; k < 4; ++k )
+                    {
+                        var first = 4 * j + k;
+                        var second = ( 3 === k ) ? ( first - 3 ) : ( first + 1 );
+                        var third = first + 4;
+                        var fourth = second + 4;
+
+                        indices.push( first );
+                        indices.push( second );
+                        indices.push( fourth );
+                        indices.push( first );
+                        indices.push( fourth );
+                        indices.push( third );
+                    }
+                }
+
+                indices.push( lastHead * 4 );
+                indices.push( lastHead * 4 + 1 );
+                indices.push( lastHead * 4 + 2 );
+                indices.push( lastHead * 4 + 3 );
+                indices.push( lastHead * 4);
+                indices.push( lastHead * 4 + 2 );
+
+
+                var renderInfo =
+                {
+                    vertexs: vertexs,
+                    indices: indices,
+                    colors: colors,
+                }
+
+                drawBuffer = glUtil.updateInfo( gl, program, renderInfo );
+
+            }
+
+            function initTexture( src )
+            {
+                texture = glUtil.newTexture( gl, src );
+            }
+
+            var angleSpan = 0.0;
+            var lastTime = 0.0;
+            var subAngle = 1.0;
+
+            function animate()
+            {
+                var timeNow = Date.now();
+                if( 0 != lastTime )
+                {
+                    var subTime = timeNow - lastTime;
+
+                    angleSpan += subAngle;
+
+                    if( 60.0 < angleSpan || -60.0 > angleSpan )
+                    {
+                        subAngle *= -1;
+                    }
+
+                }
+                lastTime = timeNow;
+            }
+
+            function drawScene()
+            {
+                glUtil.updateView( gl );
+
+                pMatrix = okMat4Proj( 60, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0 );
+                mvMatrix = okMat4Trans( 0.0, 0.0, -5.0 );
+                mvMatrix.rotX( OAK.SPACE_LOCAL, 30, true );
+
+                gl.useProgram( program );
+                glUtil.updateMatrixUniforms( gl, program, pMatrix, mvMatrix );
+
+                gl.uniform1f( program.uYStart, ( -1.6 ) );
+                gl.uniform1f( program.uAngleSpan, ( angleSpan ) );
+
+                glUtil.render( drawBuffer );
+            }
+
+            function tick()
+            {
+                requestAnimationFrame( tick );
+
+                drawScene();
+                animate();
+            }
+
+            function Start()
+            {
+                var canvas = document.getElementById( "twistingjelly" );
+
+                initWebGL( canvas );
+                initProgram();
+                initBuffer();
+                initTexture();
+
+                glUtil.reset( gl, true );
+
+                tick();
+
+            }
+            
+        </script>
+
+    </head>
+
+    <body onload="Start();">
+
+        <canvas id="twistingjelly" style="border: none;" width="500" height="500"></canvas>
+
+    </body>
+</html>
