@@ -21,8 +21,12 @@
 
 ![](https://raw.githubusercontent.com/pepsigit/Pictures/master/WebGL2/1.gif)
 
+[Code](https://github.com/pepsigit/WebGL2/blob/master/WavingFlag.html)
+
 ---
 
 * <font color=#8B008B>**扭动的软糖**</font>
 
 ![](https://raw.githubusercontent.com/pepsigit/Pictures/master/WebGL2/2.gif)
+
+[Code](https://github.com/pepsigit/WebGL2/blob/master/TwistingJelly.html)
