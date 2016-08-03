@@ -21,7 +21,7 @@
 
 ![](https://raw.githubusercontent.com/pepsigit/Pictures/master/WebGL2/1.gif)
 
-[Code](https://github.com/pepsigit/WebGL2/blob/master/WavingFlag.html)
+[Code](https://github.com/pepsigit/WebGL2/blob/master/examples/WavingFlag.html)
 
 ---
 
@@ -29,4 +29,12 @@
 
 ![](https://raw.githubusercontent.com/pepsigit/Pictures/master/WebGL2/2.gif)
 
-[Code](https://github.com/pepsigit/WebGL2/blob/master/TwistingJelly.html)
+[Code](https://github.com/pepsigit/WebGL2/blob/master/examples/TwistingJelly.html)
+
+---
+
+* <font color=#8B008B>**风吹椰林**</font>
+
+![](https://raw.githubusercontent.com/pepsigit/Pictures/master/WebGL2/3.gif)
+
+[Code](https://github.com/pepsigit/WebGL2/tree/master/examples/beach)
