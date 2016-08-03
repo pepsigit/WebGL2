@@ -111,9 +111,9 @@
 
             function initProgram()
             {
-                program[ 0 ] = glUtil.newProgram( gl, "shader-vs-x", "shader-fs");
-                program[ 1 ] = glUtil.newProgram( gl, "shader-vs-xy", "shader-fs");
-                program[ 2 ] = glUtil.newProgram( gl, "shader-vs-x-y", "shader-fs");
+                program[ 0 ] = glUtil.newProgramWithScriptId( gl, "shader-vs-x", "shader-fs");
+                program[ 1 ] = glUtil.newProgramWithScriptId( gl, "shader-vs-xy", "shader-fs");
+                program[ 2 ] = glUtil.newProgramWithScriptId( gl, "shader-vs-x-y", "shader-fs");
 
                 program[ 0 ].uStartAngle    = gl.getUniformLocation( program[ 0 ], "uStartAngle" );
                 program[ 0 ].uWidthSpan     = gl.getUniformLocation( program[ 0 ], "uWidthSpan" );
@@ -249,7 +249,7 @@
                 gl.bindTexture( gl.TEXTURE_2D, texture );
                 gl.uniform1i( currProgram.uSampler, 0 );
 
-                glUtil.render( renderBuffer[ 0 ] );
+                glUtil.render( gl, renderBuffer[ 0 ] );
 
                 /* **************************** */
                 mvMatrix = new okMat4();
@@ -268,7 +268,7 @@
                 gl.bindTexture( gl.TEXTURE_2D, texture );
                 gl.uniform1i( currProgram.uSampler, 0 );
 
-                glUtil.render( renderBuffer[ 1 ] );
+                glUtil.render( gl, renderBuffer[ 1 ] );
 
                 /* **************************** */
                 mvMatrix = new okMat4();
@@ -287,7 +287,7 @@
                 gl.bindTexture( gl.TEXTURE_2D, texture );
                 gl.uniform1i( currProgram.uSampler, 0 );
 
-                glUtil.render( renderBuffer[ 2 ] );
+                glUtil.render( gl, renderBuffer[ 2 ] );
 
             }
 
@@ -307,7 +307,7 @@
                 initWebGL( canvas );
                 initProgram();
                 initBuffer();
-                initTexture( "./res/glass.gif" );
+                initTexture( "../res/glass.gif" );
 
                 glUtil.reset( gl, true );
 
