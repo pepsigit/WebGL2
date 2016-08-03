@@ -2,10 +2,10 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <title>TwistingJelly</title>
+        <title>TwistingJelly - 扭动的软糖</title>
 
-        <script src="lib/Oak3D_v_0_5.js"></script>
-        <script src="lib/glUtil.js"></script>
+        <script src="../lib/Oak3D_v_0_5.js"></script>
+        <script src="../lib/glUtil.js"></script>
 
         <script id="shader-vs" type="shader/vs">
 
@@ -47,7 +47,7 @@
 
             void main( void )
             {
-                gl_FragColor = vColor;//vec4( 1.0, 0.0, 0.0, 1.0 );//texture2D( uSampler, vec2( vCoord.s, vCoord.t ) );
+                gl_FragColor = vColor;
             }
 
         </script>
@@ -63,7 +63,7 @@
 
             function initProgram()
             {
-                program = glUtil.newProgram( gl, "shader-vs", "shader-fs" );
+                program = glUtil.newProgramWithScriptId( gl, "shader-vs", "shader-fs" );
 
                 program.uYStart     = gl.getUniformLocation( program, "yStart" );
                 program.uAngleSpan  = gl.getUniformLocation( program, "angleSpan" );
@@ -198,7 +198,7 @@
                 gl.uniform1f( program.uYStart, ( -1.6 ) );
                 gl.uniform1f( program.uAngleSpan, ( angleSpan ) );
 
-                glUtil.render( drawBuffer );
+                glUtil.render( gl, drawBuffer );
             }
 
             function tick()
